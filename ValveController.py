@@ -1,7 +1,34 @@
+
+# TODO Code: add ways to save protocols; 
+# TODO Code: Implement green/red port indicators;  
+# TODO Code: polling the valve to confirm actual position?;  
+# TODO Code: Add error handling for all of the above;  
+# TODO Code: add Bob's pages to protocol builder
+# TODO Code (optional):  add additional feedback (console / text output) to indicate when valve changes are complete and verified;  
+# TODO Code (optional): add valve changes (in the picture of circles) to show active ports and how they're internally routed;  
+# TODO Code (optional): add flow paths (with animation?) to show flow paths (like the highlighter from your diagrams; 
+
+import os
+# We had some issues with python finding the appropriate .dll file.  Here is a 
+# hardcoded file location - path to the actual dll folder with FTD2XX64.dll
+# TODO move this dll_path to a config file, or suffer the stupid git updates from each user / location that could break any other user's build
+dll_path = r'C:\Windows\System32\DriverStore\FileRepository\ftdibus.inf_amd64_6d7e924c4fdd3111\amd64' 
+os.add_dll_directory(dll_path)
+
+import amfTools as AMF
+# TODO Implement this in lieu of the simple text outputs
+# help(AMF)
+# AMF.getValvePosition(self) # int
+# AMF.getValveStatus(self) # int
+# AMF.setPortNumber(self, portnumber: int = None)  # Set the number of ports of the valve, e.g., portnumber [1; 48]
+# AMF.valveMove(self, target: int, mode: int = 0, enforced: bool = False, block: bool = True) #  Move the valve to the target port
+# AMF.valveShortestPath(self, target: int, enforced: bool = False, block: bool = True) #  Move to the target port using the shortest path
+
 import time
 import threading 
 import tkinter as tk
 from tkinter import ttk, messagebox
+
 
 # --- 1. Configuration & Data ---
 # valveCount = 6
