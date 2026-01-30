@@ -1,3 +1,9 @@
+
+# ALL THE IMPORTING AND TODO LIST STUFF NEEDS TO BE COMPLETED BEFORE A USABLE 
+# PROGRAM CAN BE IMPLEMENTED - THESE ARE NOT JUST COMMENTS! THESE ARE NEEDED 
+# (mostly) NEXT STEPS!
+
+
 # TODO Code: add Bob's pages to protocol builder
 # TODO Code: Implement green/red port indicators;  
 # TODO Code: polling the valve to confirm actual position?;  
@@ -40,6 +46,18 @@ except Exception as e:
 # TODO valve testing
 # TODO (from Bob's pages, above) add fail-stop to cut the flow "GLOBAL_SAFE_PORT = 1"
 # TODO need valve move timing (will inform polling interval and how we set them / change them)
+
+
+# code test with devices:  list_amf = amfTools.util.getProductList() will get the list of connected devices
+# amf = amfTools.AMF(list_amf[0])  # this will take the first product it found and assign it to amf.  we probably want to call it valveA:F BUT
+# we need to see if a reboot will assign it a different hexID
+# amf.getValvePosition() and amf.checkValveStatus() seem to be useful
+# ... the address was 0x1f16e5ce750 and after reboot it was 0x1f16e4b3890
+# for amf in list_amf:
+#    print(amf)
+# amf.serialnumber (match this in a list)
+
+
 
 class ValveApp:
     def __init__(self, root):
@@ -154,6 +172,10 @@ class ValveApp:
         self.console.insert('end', f"[{time.strftime('%H:%M:%S')}] {message}\n")
         self.console.see('end')
         self.console.config(state='disabled')
+        
+    def portConvert(self, v_id, port):
+        v_letter = chr(v_id + 64) # Turns 1 into 'A'
+        self.log(f"Valve {v_letter} moved to Port {port}")
 
     def update_hardware_loop(self):
         """Checks actual vs target and updates circle fill colors."""

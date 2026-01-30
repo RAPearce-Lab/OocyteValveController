@@ -33,6 +33,9 @@ try:
     
     print(f"Connected to product {amf.getType()} on port {amf.getSerialPort()}\n")
     
+    # amf.getValvePosition() # int
+    # amf.getValveStatus() # int
+    
     # Check if the product is homed (if not, home it)
     if not amf.getHomeStatus():
         amf.home()
