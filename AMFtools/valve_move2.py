@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #*******************************************************************************
-# File : valve_move.py
+# File : valve_move2.py
 # Package : AMFTools example
 # Description : This module provide an example of how to move an RVM
 # Author : Matthieu Gevers - AMF

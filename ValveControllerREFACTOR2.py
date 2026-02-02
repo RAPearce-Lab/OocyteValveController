@@ -3,6 +3,9 @@
 # PROGRAM CAN BE IMPLEMENTED - THESE ARE NOT JUST COMMENTS! THESE ARE NEEDED 
 # (mostly) NEXT STEPS!
 
+# TODO decide how to fold the refactored code into MAIN;
+# TODO pull out some functions into GUI?;  
+# TODO As an exercise, I'm trying to modify the code so that it says A:F instead of 1:6 for valve number.  I think keeping the number system and v_id is fine, (better programmatically) so I just want to look for places where it displays text, right?  finding all these: self.canvas.create_text  and the V{v_id} part just change it to;  
 
 # TODO Code: add Bob's pages to protocol builder
 # TODO Code: Implement green/red port indicators;  
@@ -81,6 +84,10 @@ class ValveApp:
             "Air Purge":    [ (1, 0.5, 2), (2, 0.5, 2), (3, 0.5, 2) ],
             "System Reset": [ (i, 0.1, 1) for i in range(1, 7) ],
             "Sample Load":  [ (4, 1.0, 3), (5, 2.0, 2) ]
+            # send TTL trigger (to start recording)
+            # sample apply
+            # merge purge / wash / load 
+            
         }
         
         self.valve_map = {} # Oval ID -> Valve ID
