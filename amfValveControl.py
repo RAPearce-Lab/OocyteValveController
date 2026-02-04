@@ -4,15 +4,19 @@ import os
 import time
 
 class amfValveControl:
-    def __init__(self):
+    def __init__(self,status_callback=None):
+        self.status_callback = status_callback
+        self.log("Initializing Hardware...")
         configFile = "valve_config.json" 
         # 1 get the list of connected valves
         self.valveList = self.getValveList()
         print("1. Connected valves discovered.")
+        self.log("1. Connected valves discovered.")
         # 2. load a valve configuration (serial# to letter association)
         self.serialMap = {}
         self.loadConfig(configFile)
         print("2. Valve map loaded.")
+        self.log("2. Valve map loaded.")
         # 3. be sure all valves are present
         theseSerials = {v.serialnumber for v in self.valveList}
         expectedSerials = set(self.serialMap.values())
@@ -20,11 +24,15 @@ class amfValveControl:
             missingValves = expectedSerials - theseSerials
             raise RuntimeError(f"unable to find valve: {missingValves}")
         print("3. All valves confirmed.")
+        self.log("3. All valves confirmed.")
         # 4. associate the letters with the serial number and object
         self.initializeValves(self.valveList)
         print("4. Letter mapping to hardware completed.")
+        self.log("4. Letter mapping to hardware completed.")
+        # 5. home all valves 
         self.setAllValvesHome()
         print("5. All valves homed.")
+        self.log("5. All valves homed.")
     def loadConfig(self,configFile):
         thisFolder = os.path.dirname(__file__)
         configFilePath = os.path.join(thisFolder,configFile)
@@ -41,6 +49,10 @@ class amfValveControl:
                     self.valves[label] = hardware
         if len(self.valves) != len(self.serialMap):
             raise RuntimeError("unable to initialize valves!")
+    def log(self, message):
+        print(message)
+        if self.status_callback:
+            self.status_callback(message)
 
     @staticmethod
     def getValveList():
@@ -54,11 +66,13 @@ class amfValveControl:
     def setAllValvesHome(self):
         for label in self.valves:
             print(f"Homing Valve {label}.")
+            self.log(f"Homing Valve {label}.")
             self.setValveHome(label)
     def setValvePort(self, valveID, portID):
         thisValve = amfTools.AMF(self.valves.get(valveID))
         thisValve.valveShortestPath(portID, block= False)  # Non blocking function
         time.sleep(0.01)
+        self.log(f"moving valve: {valveID} to port {portID}.")
         thisValve.disconnect()
     def getValvePort(self, valveID):
         thisValve = amfTools.AMF(self.valves.get(valveID))
@@ -69,4 +83,5 @@ class amfValveControl:
     def getAllValves(self):
         for label in self.valves:
             print(f"Valve: {label} at port {self.getValvePort(label)}.")
+            self.log(f"Valve: {label} at port {self.getValvePort(label)}.")
 

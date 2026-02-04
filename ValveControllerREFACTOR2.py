@@ -21,6 +21,7 @@ import threading
 import time
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
+from amfValveControl import amfValveControl
 
 # --- DLL Handling ---
 # We had some issues with python finding the appropriate .dll file.  Here is a 
@@ -64,6 +65,7 @@ except Exception as e:
 
 class ValveApp:
     def __init__(self, root):
+        
         self.root = root
         self.root.title("Lab Valve Protocol Builder v2.0")
         
@@ -84,10 +86,9 @@ class ValveApp:
             "Air Purge":    [ (1, 0.5, 2), (2, 0.5, 2), (3, 0.5, 2) ],
             "System Reset": [ (i, 0.1, 1) for i in range(1, 7) ],
             "Sample Load":  [ (4, 1.0, 3), (5, 2.0, 2) ]
-            # send TTL trigger (to start recording)
-            # sample apply
-            # merge purge / wash / load 
-            
+            # TODO send TTL trigger (to start recording)
+            # TODO sample apply
+            # TODO merge purge / wash / load 
         }
         
         self.valve_map = {} # Oval ID -> Valve ID
@@ -99,8 +100,22 @@ class ValveApp:
 
         self.setup_ui()
         
-        # Start the Polling Loop (Heartbeat)
-        self.update_hardware_loop()
+        self.root.update()
+
+        # This is the "Messenger" function
+        def gui_log(msg):
+            self.log(msg)
+        try:
+            # Pass the helper function to the controller
+            self.vc = amfValveControl(status_callback=gui_log)
+            self.update_hardware_loop()  # Start the Polling Loop (Heartbeat)
+        except RuntimeError as e:
+            gui_log(f"CRITICAL ERROR: {e}")
+            raise
+            
+       
+        
+
 
     def setup_ui(self):
         # --- 1. Valve Display (Top) ---
@@ -191,7 +206,7 @@ class ValveApp:
             actual = self.actual_positions[v_id]
             color = "lightgreen" if target == actual else "yellow"
             self.canvas.itemconfig(self.valve_shapes[v_id], fill=color)
-        self.root.after(100, self.update_hardware_loop)
+        self.root.after(500, self.update_hardware_loop)
 
     def toggle_valve(self, event):
         item_list = self.canvas.find_closest(event.x, event.y)
