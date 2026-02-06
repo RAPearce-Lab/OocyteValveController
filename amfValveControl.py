@@ -10,12 +10,12 @@ class amfValveControl:
         configFile = "valve_config.json" 
         # 1 get the list of connected valves
         self.valveList = self.getValveList()
-        print("1. Connected valves discovered.")
+        # print("1. Connected valves discovered.")
         self.log("1. Connected valves discovered.")
         # 2. load a valve configuration (serial# to letter association)
         self.serialMap = {}
         self.loadConfig(configFile)
-        print("2. Valve map loaded.")
+        # print("2. Valve map loaded.")
         self.log("2. Valve map loaded.")
         # 3. be sure all valves are present
         theseSerials = {v.serialnumber for v in self.valveList}
@@ -23,22 +23,24 @@ class amfValveControl:
         if theseSerials != expectedSerials:
             missingValves = expectedSerials - theseSerials
             raise RuntimeError(f"unable to find valve: {missingValves}")
-        print("3. All valves confirmed.")
+        # print("3. All valves confirmed.")
         self.log("3. All valves confirmed.")
         # 4. associate the letters with the serial number and object
         self.initializeValves(self.valveList)
-        print("4. Letter mapping to hardware completed.")
+        # print("4. Letter mapping to hardware completed.")
         self.log("4. Letter mapping to hardware completed.")
         # 5. home all valves 
         self.setAllValvesHome()
-        print("5. All valves homed.")
+        # print("5. All valves homed.")
         self.log("5. All valves homed.")
     def loadConfig(self,configFile):
         thisFolder = os.path.dirname(__file__)
         configFilePath = os.path.join(thisFolder,configFile)
         try:
             with open(configFilePath, 'r') as f:
-                self.serialMap = json.load(f)
+                loadedConfig = json.load(f)
+            self.serialMap= {label: data['sn'] for label, data in loadedConfig.items()}
+            self.portCounts = {label: data['ports'] for label, data in loadedConfig.items()}
         except Exception as e:
             print(f"I couldn't load {e}")
     def initializeValves(self, valveList):
@@ -60,13 +62,16 @@ class amfValveControl:
     def setValveHome(self, valveID):
         thisValve = amfTools.AMF(self.valves.get(valveID))
         if not thisValve.getHomeStatus():
+            self.log(f"Homing Valve {valveID}.")
             thisValve.home()
-            time.sleep(0.01) # 10ms is usually a very safe minimum (according to google. test?) 
+            time.sleep(0.01) # 10ms is usually a very safe minimum (according to google. test?)
+        else:
+            self.log(f"{valveID} already home.")    
         thisValve.disconnect()
     def setAllValvesHome(self):
         for label in self.valves:
-            print(f"Homing Valve {label}.")
-            self.log(f"Homing Valve {label}.")
+            # print(f"Homing Valve {label}.")
+            # self.log(f"Homing Valve {label}.")
             self.setValveHome(label)
     def setValvePort(self, valveID, portID):
         thisValve = amfTools.AMF(self.valves.get(valveID))
@@ -82,6 +87,6 @@ class amfValveControl:
         return portOut
     def getAllValves(self):
         for label in self.valves:
-            print(f"Valve: {label} at port {self.getValvePort(label)}.")
+            # print(f"Valve: {label} at port {self.getValvePort(label)}.")
             self.log(f"Valve: {label} at port {self.getValvePort(label)}.")
 
