@@ -1,8 +1,4 @@
 
-# ALL THE IMPORTING AND TODO LIST STUFF NEEDS TO BE COMPLETED BEFORE A USABLE 
-# PROGRAM CAN BE IMPLEMENTED - THESE ARE NOT JUST COMMENTS! THESE ARE NEEDED 
-# (mostly) NEXT STEPS!
-
 # TODO decide how to fold the refactored code into MAIN;
 # TODO pull out some functions into GUI?;  
 # TODO As an exercise, I'm trying to modify the code so that it says A:F instead of 1:6 for valve number.  I think keeping the number system and v_id is fine, (better programmatically) so I just want to look for places where it displays text, right?  finding all these: self.canvas.create_text  and the V{v_id} part just change it to;  
@@ -62,53 +58,40 @@ except Exception as e:
 # amf.serialnumber (match this in a list)
 
 
-
 class ValveApp:
     def __init__(self, root):
-        
         self.root = root
         self.root.title("Lab Valve Protocol Builder v2.0")
-        
-        # --- Data State ---
-        # valveCount = 6
-        # VALVE_POSITIONS = [(0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (2, 1)]
-        self.valve_state = {
-            1: [1, 4], 2: [1, 6], 3: [1, 8], 
-            4: [1, 4], 5: [1, 6], 6: [1, 8]
-        }
-        
-        # Track Target vs Actual for the visual indicators
-        self.target_positions = {i: 1 for i in range(1, 7)}
-        self.actual_positions = {i: 1 for i in range(1, 7)}
-        
+        # --- Data State (Now using Letters) ---
+        self.valve_labels = ['A', 'B', 'C', 'D', 'E', 'F']
+        self.target_positions = {k: 1 for k in self.valve_labels}
+        self.actual_positions = {k: 1 for k in self.valve_labels}
+        # modify these - pull from a presets file?
         self.presets = {
-            "Saline Flush": [ (1, 1.0, 4), (2, 1.0, 1), (6, 1.0, 1) ],
-            "Air Purge":    [ (1, 0.5, 2), (2, 0.5, 2), (3, 0.5, 2) ],
-            "System Reset": [ (i, 0.1, 1) for i in range(1, 7) ],
-            "Sample Load":  [ (4, 1.0, 3), (5, 2.0, 2) ]
-            # TODO send TTL trigger (to start recording)
+            "Saline Flush": [ ('A', 1.0, 4), ('B', 1.0, 1), ('F', 1.0, 1) ],
+            "Air Purge":    [ ('A', 0.5, 2), ('B', 0.5, 2), ('C', 0.5, 2) ],
+            #"System Reset": [ (i, 0.1, 1) for i in range(1, 7) ],
+            "Sample Load":  [ ('D', 1.0, 3), ('E', 2.0, 2) ]
+            # TODO send TTL trigger (to start recording)    https://www.adafruit.com/product/954  ???
             # TODO sample apply
             # TODO merge purge / wash / load 
         }
-        
+        # some flags and vars
         self.valve_map = {} # Oval ID -> Valve ID
         self.valve_text_map = {} # Valve ID -> Text ID
         self.valve_shapes = {} # Valve ID -> Oval ID
-        
         self.is_running = False
         self.abort_flag = False
-
+        # setup!
         self.setup_ui()
-        
-        self.root.update()
-
-        # This is the "Messenger" function
+        self.root.update() 
         def gui_log(msg):
             self.log(msg)
         try:
-            # Pass the helper function to the controller
-            self.vc = amfValveControl(status_callback=gui_log)
-            self.update_hardware_loop()  # Start the Polling Loop (Heartbeat)
+            # create our valveControl interface object
+            self.vc = amfValveControl(status_callback=gui_log) 
+            # heartbeat loop
+            # self.update_hardware_loop()  
         except RuntimeError as e:
             gui_log(f"CRITICAL ERROR: {e}")
             raise
@@ -126,16 +109,15 @@ class ValveApp:
         self.canvas.pack()
         self.canvas.bind("<Button-1>", self.toggle_valve)
 
-        # Explicitly define positions for the "Manifold" layout
         # Format: { Valve_ID: (x, y) }
-        coords = {1: (375, 50), 2: (375, 150), 3: (225, 150), 4: (75, 150), 5: (525, 150), 6: (675, 150)}
+        coords = {'A': (375, 50), 'B': (375, 150), 'C': (225, 150), 'D': (75, 150), 'E': (525, 150), 'F': (675, 150)}
         
-        for v_id, (x, y) in coords.items():
+        for label, (x, y) in coords.items():
             s_id = self.canvas.create_oval(x-25, y-25, x+25, y+25, fill="lightgreen", width=2)
-            t_id = self.canvas.create_text(x + 55, y, text=f"V{v_id} P:{self.valve_state[v_id][0]}", font=("Arial", 9, "bold"))
-            self.valve_map[s_id] = v_id
-            self.valve_text_map[v_id] = t_id
-            self.valve_shapes[v_id] = s_id
+            t_id = self.canvas.create_text(x + 55, y, text=f"{label} | P:1", font=("Arial", 9, "bold"))
+            self.valve_map[s_id] = label
+            self.valve_text_map[label] = t_id
+            self.valve_shapes[label] = s_id
 
         # --- 2. Protocol Builder (Middle) ---
         builder_frame = ttk.Frame(self.root, padding=10)
@@ -188,6 +170,26 @@ class ValveApp:
         ttk.Button(btn_frame, text="Load Protocol", command=self.load_protocol).pack(side="right", padx=5)
         ttk.Button(btn_frame, text="Clear", command=lambda: self.seq_tree.delete(*self.seq_tree.get_children())).pack(side="right", padx=2)
 
+    def moveValve(self, label, port):
+        self.target_positions[label] = port
+        self.canvas.itemconfig(self.valve_shapes[label], fill="yellow")
+        self.log(f"Moving Valve {label} -> Port {port}...")
+        self.root.update_idletasks()
+        try:
+            # 2. Physical Move
+            self.vc.setValvePort(label, port)
+            # 3. 'Arrived'
+            self.actual_positions[label] = port
+            self.canvas.itemconfig(self.valve_shapes[label], fill="lightgreen")
+            self.canvas.itemconfig(self.valve_text_map[label], text=f"Valve {label} | P:{port}")
+        except Exception as e:
+            # 4. Error! Turn it Red
+            self.canvas.itemconfig(self.valve_shapes[label], fill="red")
+            self.log(f"MOVE FAILED: Valve {label} to {port}. Error: {e}")
+        self.root.update_idletasks()
+
+
+
     def log(self, message):
         """Adds timestamped feedback to the console."""
         self.console.config(state='normal')
@@ -201,28 +203,23 @@ class ValveApp:
 
     def update_hardware_loop(self):
         """Checks actual vs target and updates circle fill colors."""
-        for v_id in range(1, 7):
-            target = self.target_positions[v_id]
-            actual = self.actual_positions[v_id]
+        self.vc.getAllValves(self)
+        for label in self.valve_labels:
+            target = self.target_positions[label]
+            actual = self.actual_positions[label]
             color = "lightgreen" if target == actual else "yellow"
-            self.canvas.itemconfig(self.valve_shapes[v_id], fill=color)
-        self.root.after(500, self.update_hardware_loop)
+            self.canvas.itemconfig(self.valve_shapes[label], fill=color)
+        self.root.after(5000, self.update_hardware_loop)
 
     def toggle_valve(self, event):
-        item_list = self.canvas.find_closest(event.x, event.y)
-        if not item_list: return
-        item = item_list[0]
+        item = self.canvas.find_closest(event.x, event.y)[0]
         if item in self.valve_map:
-            v_id = self.valve_map[item]
-            cur_p = self.target_positions[v_id]
-            m_port = self.valve_state[v_id][1]
-            new_p = (cur_p % m_port) + 1
-            self.target_positions[v_id] = new_p
-            # Simulate mechanical move (until hardware arrives)
-            if not HARDWARE_CONNECTED:
-                 self.root.after(600, lambda v=v_id, p=new_p: self.set_actual(v, p))
-            self.canvas.itemconfig(self.valve_text_map[v_id], text=f"V{v_id} P:{new_p}")
-            self.log(f"Manual Toggle: Valve {v_id} commanded to Port {new_p}")
+            label = self.valve_map[item]
+            cur_p = self.actual_positions[label]
+            max_p = self.vc.portCounts[label]
+            new_p = (cur_p % max_p) + 1
+            # Manual moves should run in a thread so they don't lock the GUI
+            threading.Thread(target=self.moveValve, args=(label, new_p), daemon=True).start()
 
     def set_actual(self, v_id, p):
         self.actual_positions[v_id] = p
@@ -278,6 +275,8 @@ class ValveApp:
             self.abort_flag = False
             threading.Thread(target=self.run_protocol, daemon=True).start()
 
+
+
     def run_protocol(self):
         self.is_running = True
         self.log("Protocol Sequence started.")
@@ -285,20 +284,15 @@ class ValveApp:
             for item in self.seq_tree.get_children():
                 if self.abort_flag: break
                 name, duration = self.seq_tree.item(item, 'values')
-                self.root.after_idle(lambda i=item: self.seq_tree.selection_set(i))
-                self.log(f"Running: {name} for {duration}s")
-                steps = self.presets.get(name, [])
-                for v_id, _, port in steps:
-                    self.target_positions[v_id] = port
-                    self.root.after_idle(lambda v=v_id, p=port: self.canvas.itemconfig(self.valve_text_map[v], text=f"V{v} P:{p}"))
-                    if not HARDWARE_CONNECTED:
-                         self.root.after(800, lambda v=v_id, p=port: self.set_actual(v, p))
+                # Execute all moves in this preset
+                for v_idx, _, port in self.presets.get(name, []):
+                    label = chr(64 + v_idx)
+                    self.moveValve(label, port) 
                 time.sleep(float(duration))
-            self.log("Protocol Sequence finished.")
-        except Exception as e:
-            self.log(f"Runtime Error: {e}")
         finally:
             self.is_running = False
+
+
 
 if __name__ == "__main__":
     root = tk.Tk()
