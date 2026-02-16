@@ -1,6 +1,12 @@
+import os
+# TODO fix this!
+# this driver isn't being found even when added to path, force it to add with this
+# 1. move the dll to the program folder?
+# 2. add this path to the config file because not every install will end up there?
+DLL_PATH = r'C:\Windows\System32\DriverStore\FileRepository\ftdibus.inf_amd64_6d7e924c4fdd3111\amd64' 
+os.add_dll_directory(DLL_PATH)
 import amfTools
 import json
-import os
 import time
 
 class amfValveControl:

@@ -11,12 +11,12 @@
 # TODO Code (optional): add valve changes (in the picture of circles) to show active ports and how they're internally routed;  
 # TODO Code (optional): add flow paths (with animation?) to show flow paths (like the highlighter from your diagrams; 
 
-import os
+# import os
 import json
 import threading
 import time
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
+from tkinter import ttk, filedialog
 from amfValveControl import amfValveControl
 
 # --- DLL Handling ---
@@ -26,14 +26,15 @@ from amfValveControl import amfValveControl
 # more notes: need the amfTools here: https://pypi.org/project/AMFTools/  and 
 # one dependancy is here: https://ftdichip.com/drivers/d2xx-drivers/
 # TODO create an "install" file writeup
-DLL_PATH = r'C:\Windows\System32\DriverStore\FileRepository\ftdibus.inf_amd64_6d7e924c4fdd3111\amd64' 
-try:
-    os.add_dll_directory(DLL_PATH)
-    import amfTools as AMF
-    HARDWARE_CONNECTED = True
-except Exception as e:
-    print(f"Hardware library load failed (Entering Simulation Mode): {e}")
-    HARDWARE_CONNECTED = False
+
+# try:
+#     DLL_PATH = r'C:\Windows\System32\DriverStore\FileRepository\ftdibus.inf_amd64_6d7e924c4fdd3111\amd64' 
+#     os.add_dll_directory(DLL_PATH)
+#     import amfTools as AMF
+#     HARDWARE_CONNECTED = True
+# except Exception as e:
+#     print(f"Hardware library load failed (Entering Simulation Mode): {e}")
+#     HARDWARE_CONNECTED = False
 
 # TODO Implement this in lieu of the simple text outputs
 # help(AMF)
