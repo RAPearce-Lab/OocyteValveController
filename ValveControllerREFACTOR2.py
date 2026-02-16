@@ -19,6 +19,21 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from amfValveControl import amfValveControl
 
+# --- DLL Handling ---
+# We had some issues with python finding the appropriate .dll file.  Here is a 
+# hardcoded file location - path to the actual dll folder with FTD2XX64.dll
+# TODO move this dll_path to a config file, or suffer the stupid git updates from each user / location that could break any other user's build
+# more notes: need the amfTools here: https://pypi.org/project/AMFTools/  and 
+# one dependancy is here: https://ftdichip.com/drivers/d2xx-drivers/
+# TODO create an "install" file writeup
+DLL_PATH = r'C:\Windows\System32\DriverStore\FileRepository\ftdibus.inf_amd64_6d7e924c4fdd3111\amd64' 
+try:
+    os.add_dll_directory(DLL_PATH)
+    import amfTools as AMF
+    HARDWARE_CONNECTED = True
+except Exception as e:
+    print(f"Hardware library load failed (Entering Simulation Mode): {e}")
+    HARDWARE_CONNECTED = False
 
 # TODO Implement this in lieu of the simple text outputs
 # help(AMF)
