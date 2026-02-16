@@ -1,0 +1,13 @@
+A rough install and troubleshooting outline for getting Oocyte Valve Controller software to work on a new install 
+2/16/26
+I use Spyder as the IDE.  I usually need to change the preferences: interpreter to the path Python is installed to.  I also usually install it without the whole suite of whatever ("anaconda"), so it often doesn't have pip, and a number of other things aren't set correctly out of the gate, so to speak.  Here's the solution / task list:
+1a. Make an appointment with IT to do admin install (because we're attached to a hospital so everything is locked down and no admin for anyone but the special): Python for all users and the D2XX drivers (most of the rest can use the user-level install - no admin needed)
+1b. install everything
+2. find the actual location of the Python install;  in cmd type: where python ;  use this location in Spyder's preferences: interpreter (path & .exe all needed)
+3. in the command line and in the correct python path, type: python.exe -m pip install amftools
+4. since we're using the non spyder version of python interpreter, we need the terminal window for Spyder, too: [in the python folder] python -m pip install spyder-kernels==3.1.*
+5. I assume you've added the repository and program. If not, I use Sourcetree - fairly GUI / user friendly.  don't forget to add the path to our program is in (wherever you cloned it)
+6. if it can't find the D2xx drivers make the code is running the lines: DLL_PATH = r'C:\Windows\System32\DriverStore\FileRepository\ftdibus.inf_amd64_6d7e924c4fdd3111\amd64'
+os.add_dll_directory(DLL_PATH)  . . . . (or whatever the path is) I tried adding it to the path but it still missed it.
+7. enjoy!  this got it working for me on a new install.  Main program is still under development. Please add notes.
+--Sean
