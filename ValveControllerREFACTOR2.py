@@ -181,14 +181,12 @@ class ValveApp:
             # 3. 'Arrived'
             self.actual_positions[label] = port
             self.canvas.itemconfig(self.valve_shapes[label], fill="lightgreen")
-            self.canvas.itemconfig(self.valve_text_map[label], text=f"Valve {label} | P:{port}")
+            self.canvas.itemconfig(self.valve_text_map[label], text=f"{label} | P:{port}")
         except Exception as e:
             # 4. Error! Turn it Red
             self.canvas.itemconfig(self.valve_shapes[label], fill="red")
             self.log(f"MOVE FAILED: Valve {label} to {port}. Error: {e}")
         self.root.update_idletasks()
-
-
 
     def log(self, message):
         """Adds timestamped feedback to the console."""
@@ -197,10 +195,6 @@ class ValveApp:
         self.console.see('end')
         self.console.config(state='disabled')
         
-    def portConvert(self, v_id, port):
-        v_letter = chr(v_id + 64) # Turns 1 into 'A'
-        self.log(f"Valve {v_letter} moved to Port {port}")
-
     def update_hardware_loop(self):
         """Checks actual vs target and updates circle fill colors."""
         self.vc.getAllValves(self)
@@ -221,9 +215,6 @@ class ValveApp:
             # Manual moves should run in a thread so they don't lock the GUI
             threading.Thread(target=self.moveValve, args=(label, new_p), daemon=True).start()
 
-    def set_actual(self, v_id, p):
-        self.actual_positions[v_id] = p
-
     def add_step(self):
         sel = self.lib_list.curselection()
         if sel:
@@ -241,7 +232,7 @@ class ValveApp:
         if preset:
             self.pre_tree.delete(*self.pre_tree.get_children())
             for v_id, _, port in self.presets.get(preset, []):
-                self.pre_tree.insert('', 'end', values=(f"Valve {v_id}", f"Port {port}"))
+                self.pre_tree.insert('', 'end', values=(f"{v_id}", f"Port {port}"))
 
     def save_protocol(self):
         items = self.seq_tree.get_children()
@@ -275,8 +266,6 @@ class ValveApp:
             self.abort_flag = False
             threading.Thread(target=self.run_protocol, daemon=True).start()
 
-
-
     def run_protocol(self):
         self.is_running = True
         self.log("Protocol Sequence started.")
@@ -286,8 +275,8 @@ class ValveApp:
                 name, duration = self.seq_tree.item(item, 'values')
                 # Execute all moves in this preset
                 for v_idx, _, port in self.presets.get(name, []):
-                    label = chr(64 + v_idx)
-                    self.moveValve(label, port) 
+                    #label = chr(64 + v_idx)
+                    self.moveValve(v_idx, port) 
                 time.sleep(float(duration))
         finally:
             self.is_running = False
