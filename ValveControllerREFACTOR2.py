@@ -11,7 +11,7 @@
 # TODO Code (optional): add valve changes (in the picture of circles) to show active ports and how they're internally routed;  
 # TODO Code (optional): add flow paths (with animation?) to show flow paths (like the highlighter from your diagrams; 
 
-# import os
+#import os
 import json
 import threading
 import time
@@ -111,7 +111,7 @@ class ValveApp:
         self.canvas.bind("<Button-1>", self.toggle_valve)
 
         # Format: { Valve_ID: (x, y) }
-        coords = {'A': (375, 50), 'B': (375, 150), 'C': (225, 150), 'D': (75, 150), 'E': (525, 150), 'F': (675, 150)}
+        coords = {'A': (375, 50), 'B': (375, 150), 'D': (225, 150), 'C': (75, 150), 'F': (525, 150), 'E': (675, 150)}
         
         for label, (x, y) in coords.items():
             s_id = self.canvas.create_oval(x-25, y-25, x+25, y+25, fill="lightgreen", width=2)
@@ -182,7 +182,7 @@ class ValveApp:
             # 3. 'Arrived'
             self.actual_positions[label] = port
             self.canvas.itemconfig(self.valve_shapes[label], fill="lightgreen")
-            self.canvas.itemconfig(self.valve_text_map[label], text=f"Valve {label} | P:{port}")
+            self.canvas.itemconfig(self.valve_text_map[label], text=f"{label} | P:{port}")
         except Exception as e:
             # 4. Error! Turn it Red
             self.canvas.itemconfig(self.valve_shapes[label], fill="red")
