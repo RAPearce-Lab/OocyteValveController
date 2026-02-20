@@ -174,7 +174,7 @@ class ValveApp:
     def moveValve(self, label, port):
         self.target_positions[label] = port
         self.canvas.itemconfig(self.valve_shapes[label], fill="yellow")
-        self.log(f"Moving Valve {label} -> Port {port}...")
+        self.log(f"moving Valve {label} -> Port {port}...")
         self.root.update_idletasks()
         try:
             # 2. Physical Move
