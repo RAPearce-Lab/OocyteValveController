@@ -3,7 +3,8 @@
 # TODO pull out some functions into GUI?;  
 # TODO As an exercise, I'm trying to modify the code so that it says A:F instead of 1:6 for valve number.  I think keeping the number system and v_id is fine, (better programmatically) so I just want to look for places where it displays text, right?  finding all these: self.canvas.create_text  and the V{v_id} part just change it to;  
 
-# TODO Code: add Bob's pages to protocol builder
+# TODO send TTL trigger (to start recording)    https://www.adafruit.com/product/954  ???
+
 # TODO Code: Implement green/red port indicators;  
 # TODO Code: polling the valve to confirm actual position?;  
 # TODO Code: Add error handling for all of the above;  
@@ -69,12 +70,22 @@ class ValveApp:
         self.actual_positions = {k: 1 for k in self.valve_labels}
         # modify these - pull from a presets file?
         self.presets = {
-            "Saline Flush": [ ('A', 1.0, 4), ('B', 1.0, 1), ('F', 1.0, 1) ],
-            "Air Purge":    [ ('A', 0.5, 2), ('B', 0.5, 2), ('C', 0.5, 2) ],
-            #"System Reset": [ (i, 0.1, 1) for i in range(1, 7) ],
-            "Sample Load":  [ ('D', 1.0, 3), ('E', 2.0, 2) ]
-            # TODO send TTL trigger (to start recording)    https://www.adafruit.com/product/954  ???
-            # TODO sample apply
+            "Home": [('A', 1.0, 1), ('B', 1.0, 1), ('C', 1.0, 1), ('D', 1.0, 1), ('E', 1.0, 1), ('F', 1.0, 1)],
+            "1a Wash BA, D & F": [('A', 1.0, 1), ('B', 1.0, 4), ('C', 1.0, 1), ('D', 1.0, 1), ('E', 1.0, 1), ('F', 1.0, 1)],
+            "1b Wash DB, D & F": [('A', 1.0, 1), ('B', 1.0, 3), ('C', 1.0, 1), ('D', 1.0, 1), ('E', 1.0, 1), ('F', 1.0, 1)],
+            "1c Wash FB, D & F": [('A', 1.0, 1), ('B', 1.0, 2), ('C', 1.0, 1), ('D', 1.0, 1), ('E', 1.0, 1), ('F', 1.0, 1)],
+            "2  Wash FB only": [('A', 1.0, 1), ('B', 1.0, 1), ('C', 1.0, 1), ('D', 1.0, 1), ('E', 1.0, 1), ('F', 1.0, 1)],  # how is this different from Wash F-B-A, F ? it is, but is there better logic?
+            "3  Load C1, load E1": [('A', 1.0, 1), ('B', 1.0, 1), ('C', 1.0, 7), ('D', 1.0, 1), ('E', 1.0, 7), ('F', 1.0, 1)],
+            "4a Stop load & ready": [('A', 1.0, 4), ('B', 1.0, 4), ('C', 1.0, 7), ('D', 1.0, 6), ('E', 1.0, 7), ('F', 1.0, 6)],
+            "4b SLR, air purge": [('A', 1.0, 4), ('B', 1.0, 4), ('C', 1.0, 2), ('D', 1.0, 6), ('E', 1.0, 2), ('F', 1.0, 6)],
+            "4c SLR, ND96": [('A', 1.0, 4), ('B', 1.0, 4), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 6)],
+            "4d SLR, ready": [('A', 1.0, 4), ('B', 1.0, 4), ('C', 1.0, 8), ('D', 1.0, 6), ('E', 1.0, 8), ('F', 1.0, 6)],
+            "5 Inject D": [('A', 1.0, 4), ('B', 1.0, 3), ('C', 1.0, 8), ('D', 1.0, 6), ('E', 1.0, 8), ('F', 1.0, 6)],
+            "6 Inject F": [('A', 1.0, 4), ('B', 1.0, 2), ('C', 1.0, 8), ('D', 1.0, 6), ('E', 1.0, 8), ('F', 1.0, 6)],
+            "7 Wash F-B-A, F": [('A', 1.0, 3), ('B', 1.0, 2), ('C', 1.0, 8), ('D', 1.0, 6), ('E', 1.0, 8), ('F', 1.0, 6)],
+            "8 Wash D-B-A, D": [('A', 1.0, 3), ('B', 1.0, 3), ('C', 1.0, 8), ('D', 1.0, 6), ('E', 1.0, 8), ('F', 1.0, 6)],
+            "9 Wash loops off": [('A', 1.0, 3), ('B', 1.0, 3), ('C', 1.0, 8), ('D', 1.0, 6), ('E', 1.0, 8), ('F', 1.0, 6)],
+            "10 load C2 load E2": [('A', 1.0, 2), ('B', 1.0, 4), ('C', 1.0, 6), ('D', 1.0, 5), ('E', 1.0, 6), ('F', 1.0, 5)],
             # TODO merge purge / wash / load 
         }
         # some flags and vars
@@ -220,7 +231,7 @@ class ValveApp:
         sel = self.lib_list.curselection()
         if sel:
             name = self.lib_list.get(sel[0])
-            self.seq_tree.insert('', 'end', values=(name, "10.0"))
+            self.seq_tree.insert('', 'end', values=(name, "3.0"))
             self.log(f"Step Added: {name}")
 
     def update_preview(self, event):
