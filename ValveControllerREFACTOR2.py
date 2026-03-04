@@ -17,7 +17,7 @@ import json
 import threading
 import time
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, simpledialog  
 from amfValveControl import amfValveControl
 
 # --- DLL Handling ---
@@ -70,22 +70,22 @@ class ValveApp:
         self.actual_positions = {k: 1 for k in self.valve_labels}
         # modify these - pull from a presets file?
         self.presets = {
-            "Home":                 [('A', 1.0, 1), ('B', 1.0, 1), ('C', 1.0, 1), ('D', 1.0, 1), ('E', 1.0, 1), ('F', 1.0, 1)], 
-            "1a Wash BA, D & F":    [('A', 1.0, 1), ('B', 1.0, 3), ('C', 1.0, 10), ('D', 1.0, 1), ('E', 1.0, 10), ('F', 1.0, 1)],
-            "1b Wash DB, D & F":    [('A', 1.0, 1), ('B', 1.0, 6), ('C', 1.0, 10), ('D', 1.0, 1), ('E', 1.0, 10), ('F', 1.0, 1)],
-            "1c Wash FB, D & F":    [('A', 1.0, 1), ('B', 1.0, 1), ('C', 1.0, 10), ('D', 1.0, 1), ('E', 1.0, 10), ('F', 1.0, 1)],
-            "2  Wash FB only":      [('A', 1.0, 1), ('B', 1.0, 4), ('C', 1.0, 10), ('D', 1.0, 1), ('E', 1.0, 10), ('F', 1.0, 1)],  # how is this different from Wash F-B-A, F ? it is, but is there better logic?
-            "3  Load C1, load E1":  [('A', 1.0, 1), ('B', 1.0, 4), ('C', 1.0, 7), ('D', 1.0, 1), ('E', 1.0, 7), ('F', 1.0, 1)],
-            "4a Stop load & ready": [('A', 1.0, 4), ('B', 1.0, 3), ('C', 1.0, 7), ('D', 1.0, 6), ('E', 1.0, 7), ('F', 1.0, 6)],
-            "4b SLR, air purge":    [('A', 1.0, 4), ('B', 1.0, 3), ('C', 1.0, 9), ('D', 1.0, 6), ('E', 1.0, 9), ('F', 1.0, 6)],
-            "4c SLR, ND96":         [('A', 1.0, 4), ('B', 1.0, 3), ('C', 1.0, 10), ('D', 1.0, 6), ('E', 1.0, 10), ('F', 1.0, 6)], # this might be where we need to add a very very small bubble of air
-            "4d SLR, ready":        [('A', 1.0, 4), ('B', 1.0, 3), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 6)],
-            "5 Inject D":           [('A', 1.0, 4), ('B', 1.0, 6), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 6)],
-            "6 Inject F":           [('A', 1.0, 4), ('B', 1.0, 1), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 6)],
-            "7 Wash F-B-A, F":      [('A', 1.0, 3), ('B', 1.0, 1), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 6)],
-            "8 Wash D-B-A, D":      [('A', 1.0, 3), ('B', 1.0, 6), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 6)],
-            "9 Wash loops off":     [('A', 1.0, 3), ('B', 1.0, 6), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 6)],
-            "10 load C2 load E2":   [('A', 1.0, 2), ('B', 1.0, 3), ('C', 1.0, 6), ('D', 1.0, 5), ('E', 1.0, 6), ('F', 1.0, 5)],
+            "Home":                 [('A', 1.0, 2), ('B', 1.0, 1), ('C', 1.0, 1), ('D', 1.0, 1), ('E', 1.0, 1), ('F', 1.0, 2)], 
+            "1a Wash BA, D & F":    [('A', 1.0, 2), ('B', 1.0, 3), ('C', 1.0, 10), ('D', 1.0, 1), ('E', 1.0, 10), ('F', 1.0, 2)],
+            "1b Wash DB, D & F":    [('A', 1.0, 2), ('B', 1.0, 6), ('C', 1.0, 10), ('D', 1.0, 1), ('E', 1.0, 10), ('F', 1.0, 2)],
+            "1c Wash FB, D & F":    [('A', 1.0, 2), ('B', 1.0, 1), ('C', 1.0, 10), ('D', 1.0, 1), ('E', 1.0, 10), ('F', 1.0, 2)],
+            "2  Wash FB only":      [('A', 1.0, 2), ('B', 1.0, 4), ('C', 1.0, 10), ('D', 1.0, 1), ('E', 1.0, 10), ('F', 1.0, 2)],  # how is this different from Wash F-B-A, F ? it is, but is there better logic?
+            "3  Load C8, ":  [('A', 1.0, 2), ('B', 1.0, 4), ('C', 1.0, 8), ('D', 1.0, 1), ('E', 1.0, 1), ('F', 1.0, 2)],
+            "4a Stop load & ready": [('A', 1.0, 1), ('B', 1.0, 3), ('C', 1.0, 7), ('D', 1.0, 6), ('E', 1.0, 7), ('F', 1.0, 1)],
+            "4b SLR, air purge":    [('A', 1.0, 1), ('B', 1.0, 3), ('C', 1.0, 9), ('D', 1.0, 6), ('E', 1.0, 9), ('F', 1.0, 1)],
+            "4c SLR, ND96":         [('A', 1.0, 1), ('B', 1.0, 3), ('C', 1.0, 10), ('D', 1.0, 6), ('E', 1.0, 10), ('F', 1.0, 1)], # this might be where we need to add a very very small bubble of air
+            "4d SLR, ready":        [('A', 1.0, 1), ('B', 1.0, 3), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
+            "5 Inject D":           [('A', 1.0, 1), ('B', 1.0, 6), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
+            "6 Inject F":           [('A', 1.0, 1), ('B', 1.0, 1), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
+            "7 Wash F-B-A, F":      [('A', 1.0, 4), ('B', 1.0, 1), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
+            "8 Wash D-B-A, D":      [('A', 1.0, 4), ('B', 1.0, 6), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
+            "9 Wash loops off":     [('A', 1.0, 4), ('B', 1.0, 6), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
+            "10 load C2 load E2":   [('A', 1.0, 3), ('B', 1.0, 3), ('C', 1.0, 6), ('D', 1.0, 5), ('E', 1.0, 6), ('F', 1.0, 6)],
             # TODO merge purge / wash / load 
         }
         # some flags and vars
@@ -151,6 +151,7 @@ class ValveApp:
         self.seq_tree = ttk.Treeview(mid_pane, columns=("preset", "time"), show='headings')
         self.seq_tree.heading("preset", text='Preset Name')
         self.seq_tree.heading("time", text='Wait (s)')
+        self.seq_tree.bind("<Double-1>", self.edit_time)
         self.seq_tree.pack(fill="both", expand=True)
         self.seq_tree.bind('<<TreeviewSelect>>', self.update_preview)
 
@@ -231,7 +232,7 @@ class ValveApp:
         sel = self.lib_list.curselection()
         if sel:
             name = self.lib_list.get(sel[0])
-            self.seq_tree.insert('', 'end', values=(name, "3.0"))
+            self.seq_tree.insert('', 'end', values=(name, "1.0"))
             self.log(f"Step Added: {name}")
 
     def update_preview(self, event):
@@ -277,6 +278,25 @@ class ValveApp:
         if not self.is_running:
             self.abort_flag = False
             threading.Thread(target=self.run_protocol, daemon=True).start()
+            
+    def edit_time(self, event):
+        """Opens a dialog to edit the wait time for a protocol step."""
+        item_id = self.seq_tree.identify_row(event.y)
+        column = self.seq_tree.identify_column(event.x)
+
+        # '#2' is the 'Wait (s)' column
+        if column == '#2' and item_id:
+            current_vals = self.seq_tree.item(item_id, 'values')
+            preset_name = current_vals[0]
+            old_time = current_vals[1]
+
+            # Ask for a new float value
+            new_time = simpledialog.askfloat("Edit Duration", f"Seconds to wait after {preset_name}:", initialvalue=float(old_time))
+            
+            if new_time is not None:
+                # Update the tree with the new time
+                self.seq_tree.item(item_id, values=(preset_name, f"{new_time:.1f}"))
+                self.log(f"Updated {preset_name} delay to {new_time}s")        
 
     def run_protocol(self):
         self.is_running = True
