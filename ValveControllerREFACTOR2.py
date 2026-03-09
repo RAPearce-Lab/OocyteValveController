@@ -70,22 +70,22 @@ class ValveApp:
         self.actual_positions = {k: 1 for k in self.valve_labels}
         # modify these - pull from a presets file?
         self.presets = {
-            "Home":                 [('A', 1.0, 2), ('B', 1.0, 1), ('C', 1.0, 1), ('D', 1.0, 1), ('E', 1.0, 1), ('F', 1.0, 2)], 
-            "1a Wash BA, D & F":    [('A', 1.0, 2), ('B', 1.0, 3), ('C', 1.0, 10), ('D', 1.0, 1), ('E', 1.0, 10), ('F', 1.0, 2)],
+            "Home":                 [('A', 1.0, 2), ('B', 1.0, 2), ('C', 1.0, 1), ('D', 1.0, 1), ('E', 1.0, 1), ('F', 1.0, 2)], 
+            "1a Wash BA, D & F":    [('A', 1.0, 2), ('B', 1.0, 5), ('C', 1.0, 10), ('D', 1.0, 1), ('E', 1.0, 10), ('F', 1.0, 2)],
             "1b Wash DB, D & F":    [('A', 1.0, 2), ('B', 1.0, 6), ('C', 1.0, 10), ('D', 1.0, 1), ('E', 1.0, 10), ('F', 1.0, 2)],
             "1c Wash FB, D & F":    [('A', 1.0, 2), ('B', 1.0, 1), ('C', 1.0, 10), ('D', 1.0, 1), ('E', 1.0, 10), ('F', 1.0, 2)],
-            "2  Wash FB only":      [('A', 1.0, 2), ('B', 1.0, 4), ('C', 1.0, 10), ('D', 1.0, 1), ('E', 1.0, 10), ('F', 1.0, 2)],  # how is this different from Wash F-B-A, F ? it is, but is there better logic?
-            "3  Load C8, ":  [('A', 1.0, 2), ('B', 1.0, 4), ('C', 1.0, 8), ('D', 1.0, 1), ('E', 1.0, 1), ('F', 1.0, 2)],
-            "4a Stop load & ready": [('A', 1.0, 1), ('B', 1.0, 3), ('C', 1.0, 7), ('D', 1.0, 6), ('E', 1.0, 7), ('F', 1.0, 1)],
-            "4b SLR, air purge":    [('A', 1.0, 1), ('B', 1.0, 3), ('C', 1.0, 9), ('D', 1.0, 6), ('E', 1.0, 9), ('F', 1.0, 1)],
-            "4c SLR, ND96":         [('A', 1.0, 1), ('B', 1.0, 3), ('C', 1.0, 10), ('D', 1.0, 6), ('E', 1.0, 10), ('F', 1.0, 1)], # this might be where we need to add a very very small bubble of air
-            "4d SLR, ready":        [('A', 1.0, 1), ('B', 1.0, 3), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
+            "2  Wash FB only":      [('A', 1.0, 2), ('B', 1.0, 2), ('C', 1.0, 10), ('D', 1.0, 1), ('E', 1.0, 10), ('F', 1.0, 2)],  # how is this different from Wash F-B-A, F ? it is, but is there better logic?
+            "3  Load C8, ":         [('A', 1.0, 2), ('B', 1.0, 2), ('C', 1.0, 8), ('D', 1.0, 1), ('E', 1.0, 1), ('F', 1.0, 2)],
+            "4a Stop load & ready": [('A', 1.0, 1), ('B', 1.0, 5), ('C', 1.0, 7), ('D', 1.0, 6), ('E', 1.0, 7), ('F', 1.0, 1)],
+            "4b SLR, air purge":    [('A', 1.0, 1), ('B', 1.0, 5), ('C', 1.0, 9), ('D', 1.0, 6), ('E', 1.0, 9), ('F', 1.0, 1)],
+            "4c SLR, ND96":         [('A', 1.0, 1), ('B', 1.0, 5), ('C', 1.0, 10), ('D', 1.0, 6), ('E', 1.0, 10), ('F', 1.0, 1)], # this might be where we need to add a very very small bubble of air
+            "4d SLR, ready":        [('A', 1.0, 1), ('B', 1.0, 5), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
             "5 Inject D":           [('A', 1.0, 1), ('B', 1.0, 6), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
             "6 Inject F":           [('A', 1.0, 1), ('B', 1.0, 1), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
             "7 Wash F-B-A, F":      [('A', 1.0, 4), ('B', 1.0, 1), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
             "8 Wash D-B-A, D":      [('A', 1.0, 4), ('B', 1.0, 6), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
-            "9 Wash loops off":     [('A', 1.0, 4), ('B', 1.0, 6), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
-            "10 load C2 load E2":   [('A', 1.0, 3), ('B', 1.0, 3), ('C', 1.0, 6), ('D', 1.0, 5), ('E', 1.0, 6), ('F', 1.0, 6)],
+            "9 Wash loops off":     [('A', 1.0, 4), ('B', 1.0, 2), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
+            "10 load C2 load E2":   [('A', 1.0, 3), ('B', 1.0, 5), ('C', 1.0, 6), ('D', 1.0, 5), ('E', 1.0, 6), ('F', 1.0, 6)],
             # TODO merge purge / wash / load 
         }
         # some flags and vars
@@ -97,6 +97,7 @@ class ValveApp:
         # setup!
         self.setup_ui()
         self.root.update() 
+        
         def gui_log(msg):
             self.log(msg)
         try:
@@ -107,10 +108,20 @@ class ValveApp:
         except RuntimeError as e:
             gui_log(f"CRITICAL ERROR: {e}")
             raise
+        self.root.update()
+        self.log("Initializing: Moving valves to Home positions...")
+        self.runPreset("Home")
+        
+        
+        
+        
             
        
-        
-
+    def runPreset(self, presetName):
+        moves = self.presets.get(presetName, [])
+        for label, _, port in moves:
+            threading.Thread(target=self.moveValve, args=(label, port), daemon=True).start()
+        self.log(f"Applied Preset: {presetName}")
 
     def setup_ui(self):
         # --- 1. Valve Display (Top) ---
@@ -307,7 +318,6 @@ class ValveApp:
                 name, duration = self.seq_tree.item(item, 'values')
                 # Execute all moves in this preset
                 for v_idx, _, port in self.presets.get(name, []):
-                    #label = chr(64 + v_idx)
                     self.moveValve(v_idx, port) 
                 time.sleep(float(duration))
         finally:
