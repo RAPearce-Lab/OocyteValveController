@@ -32,7 +32,7 @@ class amfValveControl:
         expectedSerials = set(self.serialMap.values())
         if theseSerials != expectedSerials:
             missingValves = expectedSerials - theseSerials
-            raise RuntimeError(f"unable to find valve: {missingValves}")
+            raise RuntimeError(f"unable to find valve: {missingValves} (try unplugging and re-plugging)")
         # print("3. All valves confirmed.")
         self.log("3. All valves confirmed.")
         # 4. associate the letters with the serial number and object
