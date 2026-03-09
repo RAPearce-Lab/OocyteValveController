@@ -1,13 +1,17 @@
-import os
-# TODO fix this!
-# this driver isn't being found even when added to path, force it to add with this
-# 1. move the dll to the program folder?
-# 2. add this path to the config file because not every install will end up there?
-DLL_PATH = r'C:\Windows\System32\DriverStore\FileRepository\ftdibus.inf_amd64_6d7e924c4fdd3111\amd64' 
-os.add_dll_directory(DLL_PATH)
 import amfTools
 import json
 import time
+import os
+
+project_root = os.path.dirname(os.path.abspath(__file__))  # Get the directory where THIS script is currently sitting
+local_dll_path = os.path.join(project_root, 'drivers')
+if os.path.exists(local_dll_path):
+    os.add_dll_directory(local_dll_path)
+    print(f"Loaded local FTDI drivers from: {local_dll_path}")
+else:
+    print("Warning: Local driver folder not found. Falling back to System32.")
+
+
 
 class amfValveControl:
     def __init__(self,status_callback=None):
