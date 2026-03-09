@@ -56,16 +56,42 @@ class amfValveControl:
     def initializeValves(self, valveList):
         self.valves = {}
         for label, sn in self.serialMap.items():
-            for hardware in valveList:
-                if hardware.serialnumber == sn:
-                    self.valves[label] = hardware
+            for hardwareItem in valveList:
+                if hardwareItem.serialnumber == sn:
+                    self.valves[label] = hardwareItem
+                    #thisValve = amfTools.AMF(hardwareItem)
+                    #self.valves[label] = thisValve
+                    nPorts = self.portCounts[label]       
+                    self.setNumberOfPorts(label,nPorts)
+                    state = 1
+                    self.configureStopOnMiddle(label,state) 
         if len(self.valves) != len(self.serialMap):
-            raise RuntimeError("unable to initialize valves!")
+            raise RuntimeError("Valves found and valves expected do not match!")
+        
+        
+    def setNumberOfPorts(self, valveID, nPorts):
+        thisValve = amfTools.AMF(self.valves.get(valveID))
+        self.log(f"Configuring {valveID} firmware: {nPorts} ports.")
+        thisValve.setPortNumber(nPorts)
+        thisValve.disconnect() # Clean close
+        
+    def configureStopOnMiddle(self, valveID, state):
+        # 1. Connect to the raw hardware
+        thisValve = amfTools.AMF(self.valves.get(valveID))
+        
+        self.log(f"Setting StopOnMiddle for {valveID} to {state}.")
+        
+        # 2. Call the new library method
+        thisValve.setStopOnMiddle(state)
+        
+        # 3. Disconnect to keep the serial bus clean
+        thisValve.disconnect()
+        
+        
     def log(self, message):
         print(message)
         if self.status_callback:
             self.status_callback(message)
-
     @staticmethod
     def getValveList():
         return amfTools.util.getProductList("USB")
