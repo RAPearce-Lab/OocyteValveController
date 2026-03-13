@@ -1,3 +1,10 @@
+# TODO 3/13/26
+# fill in the schematic map for "preset"
+# fix the manual toggle (graphic?) make circles bigger and add ports?
+
+
+
+
 
 # TODO decide how to fold the refactored code into MAIN;
 # TODO pull out some functions into GUI?;  
@@ -19,6 +26,8 @@ import time
 import tkinter as tk
 from tkinter import ttk, filedialog, simpledialog  
 from amfValveControl import amfValveControl
+import os
+import pandas as pd
 
 # --- DLL Handling ---
 # We had some issues with python finding the appropriate .dll file.  Here is a 
@@ -64,64 +73,122 @@ class ValveApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Lab Valve Protocol Builder v2.0")
-        # --- Data State (Now using Letters) ---
+
+        # 1. Initialize Variables and DATA (Presets must exist before UI)
         self.valve_labels = ['A', 'B', 'C', 'D', 'E', 'F']
-        self.target_positions = {k: 1 for k in self.valve_labels}
-        self.actual_positions = {k: 1 for k in self.valve_labels}
-        # modify these - pull from a presets file?
-        self.presets = {
-            "Home":                 [('A', 1.0, 2), ('B', 1.0, 2), ('C', 1.0, 1), ('D', 1.0, 1), ('E', 1.0, 1), ('F', 1.0, 2)], 
-            "1a Wash BA, D & F":    [('A', 1.0, 2), ('B', 1.0, 5), ('C', 1.0, 10), ('D', 1.0, 1), ('E', 1.0, 10), ('F', 1.0, 2)],
-            "1b Wash DB, D & F":    [('A', 1.0, 2), ('B', 1.0, 6), ('C', 1.0, 10), ('D', 1.0, 1), ('E', 1.0, 10), ('F', 1.0, 2)],
-            "1c Wash FB, D & F":    [('A', 1.0, 2), ('B', 1.0, 1), ('C', 1.0, 10), ('D', 1.0, 1), ('E', 1.0, 10), ('F', 1.0, 2)],
-            "2  Wash FB only":      [('A', 1.0, 2), ('B', 1.0, 2), ('C', 1.0, 10), ('D', 1.0, 1), ('E', 1.0, 10), ('F', 1.0, 2)],  # how is this different from Wash F-B-A, F ? it is, but is there better logic?
-            "3  Load C8, ":         [('A', 1.0, 2), ('B', 1.0, 2), ('C', 1.0, 8), ('D', 1.0, 1), ('E', 1.0, 1), ('F', 1.0, 2)],
-            "4a Stop load & ready": [('A', 1.0, 1), ('B', 1.0, 5), ('C', 1.0, 7), ('D', 1.0, 6), ('E', 1.0, 7), ('F', 1.0, 1)],
-            "4b SLR, air purge":    [('A', 1.0, 1), ('B', 1.0, 5), ('C', 1.0, 9), ('D', 1.0, 6), ('E', 1.0, 9), ('F', 1.0, 1)],
-            "4c SLR, ND96":         [('A', 1.0, 1), ('B', 1.0, 5), ('C', 1.0, 10), ('D', 1.0, 6), ('E', 1.0, 10), ('F', 1.0, 1)], # this might be where we need to add a very very small bubble of air
-            "4d SLR, ready":        [('A', 1.0, 1), ('B', 1.0, 5), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
-            "5 Inject D":           [('A', 1.0, 1), ('B', 1.0, 6), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
-            "6 Inject F":           [('A', 1.0, 1), ('B', 1.0, 1), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
-            "7 Wash F-B-A, F":      [('A', 1.0, 4), ('B', 1.0, 1), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
-            "8 Wash D-B-A, D":      [('A', 1.0, 4), ('B', 1.0, 6), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
-            "9 Wash loops off":     [('A', 1.0, 4), ('B', 1.0, 2), ('C', 1.0, 1), ('D', 1.0, 6), ('E', 1.0, 1), ('F', 1.0, 1)],
-            "10 load C2 load E2":   [('A', 1.0, 3), ('B', 1.0, 5), ('C', 1.0, 6), ('D', 1.0, 5), ('E', 1.0, 6), ('F', 1.0, 6)],
-            # TODO merge purge / wash / load 
-        }
-        # some flags and vars
-        self.valve_map = {} # Oval ID -> Valve ID
-        self.valve_text_map = {} # Valve ID -> Text ID
-        self.valve_shapes = {} # Valve ID -> Oval ID
         self.is_running = False
         self.abort_flag = False
-        # setup!
+        self.valve_map = {} 
+        self.valve_text_map = {} 
+        self.valve_shapes = {}
+        
+        # Define Presets here so the UI can find them to fill the Listbox
+        self.presets = {
+            "1a Wash BA, D & F": [('A', 1.0, "2"), ('B', 1.0, "2"), ('C', 1.0, "2"), ('D', 1.0, "2"), ('E', 1.0, "10"), ('F', 1.0, "2")], # don't forget we can put these in the best order according to needed flow
+            "Home":              [('A', 1.0, "1"), ('B', 1.0, "1"), ('C', 1.0, "1"), ('D', 1.0, "1"), ('E', 1.0, "1"), ('F', 1.0, "1")]
+        }
+
+        # 2. SETUP UI (Creates the console)
         self.setup_ui()
         self.root.update() 
         
-        def gui_log(msg):
-            self.log(msg)
+        # 3. LOAD MAP (Safe to log now because console exists)
+        self.load_port_map()
+
+        # 4. INITIALIZE POSITIONS (Using the loaded map)
+        self.actual_positions = {}
+        self.target_positions = {}
+        for k in self.valve_labels:
+            # Fallback to "1" if mapping failed
+            first_port = self.ordered_user_ports[k][0] if k in self.ordered_user_ports else "1"
+            self.actual_positions[k] = first_port
+            self.target_positions[k] = first_port
+
+        # 5. HARDWARE CONNECTION
         try:
-            # create our valveControl interface object
-            self.vc = amfValveControl(status_callback=gui_log) 
-            # heartbeat loop
-            # self.update_hardware_loop()  
-        except RuntimeError as e:
-            gui_log(f"CRITICAL ERROR: {e}")
-            raise
-        self.root.update()
+            # We can pass self.log directly as the callback
+            self.vc = amfValveControl(status_callback=self.log) 
+        except Exception as e:
+            self.log(f"Hardware Error: {e}")
+
         self.log("Initializing: Moving valves to Home positions...")
         self.runPreset("Home")
         
         
         
         
+    def load_port_map(self, csv_file="ValveMap.csv"):
+        """Reads ValveMap.csv and creates translation dictionaries."""
+        self.user_to_hw = {}
+        self.hw_to_user = {}
+        self.ordered_user_ports = {}       
+        if not os.path.exists(csv_file):
+            self.log(f"WARNING: {csv_file} not found! Hardware mapping will fail.")
+            return
+        try:
+            df = pd.read_csv(csv_file)
             
-       
+            # Initialize empty ordered lists for each valve found in the CSV
+            for valve in df['Valve'].dropna().unique():
+                self.ordered_user_ports[valve] = []
+            last_schem = ""
+            for _, row in df.iterrows():
+                valve = row['Valve']
+                if pd.isna(valve): continue
+                
+                hw_port = int(row['python port'])
+                raw_schem = row['Schematic port']
+                
+                # If Schematic is defined, use it. If it's NaN, append '.5' to the last one.
+                if pd.notna(raw_schem):
+                    user_port = str(int(float(raw_schem))) 
+                    last_schem = user_port
+                else:
+                    user_port = f"{last_schem}.5"
+                    
+                # Save the translations
+                self.user_to_hw[(valve, user_port)] = hw_port
+                self.hw_to_user[(valve, hw_port)] = user_port
+                
+                # Save the correct order so 'toggle' knows what's next
+                self.ordered_user_ports[valve].append(user_port)
+                
+            self.log(f"Successfully mapped {len(self.user_to_hw)} logical ports.")
+        except Exception as e:
+            self.log(f"Error loading Port Map: {e}")            
+        
+        
+        
+    def toggle_valve(self, event):
+        item = self.canvas.find_closest(event.x, event.y)[0]
+        if item in self.valve_map:
+            label = self.valve_map[item]
+            cur_user_port = self.actual_positions[label]
+            
+            # Get the mapped order for this specific valve
+            port_list = self.ordered_user_ports.get(label, [])
+            
+            if not port_list:
+                self.log(f"ERROR: No map found for Valve {label}")
+                return
+                
+            # Find current position in the list and step forward
+            if cur_user_port in port_list:
+                next_idx = (port_list.index(cur_user_port) + 1) % len(port_list)
+            else:
+                next_idx = 0   
+            new_user_port = port_list[next_idx] 
+            threading.Thread(target=self.moveValve, args=(label, new_user_port), daemon=True).start()
+    
+    
     def runPreset(self, presetName):
         moves = self.presets.get(presetName, [])
         for label, _, port in moves:
             threading.Thread(target=self.moveValve, args=(label, port), daemon=True).start()
         self.log(f"Applied Preset: {presetName}")
+        
+        
+        
 
     def setup_ui(self):
         # --- 1. Valve Display (Top) ---
@@ -194,23 +261,42 @@ class ValveApp:
         ttk.Button(btn_frame, text="Load Protocol", command=self.load_protocol).pack(side="right", padx=5)
         ttk.Button(btn_frame, text="Clear", command=lambda: self.seq_tree.delete(*self.seq_tree.get_children())).pack(side="right", padx=2)
 
-    def moveValve(self, label, port):
-        self.target_positions[label] = port
+
+
+
+        
+
+    def moveValve(self, label, user_port):
+        # 1. Look up the hardware port!
+        user_port = str(user_port) # ensure it's a string
+        hw_port = self.user_to_hw.get((label, user_port))
+        
+        if hw_port is None:
+            self.log(f"ERROR: No hardware mapping found for {label} -> Schematic {user_port}")
+            return 
+        self.target_positions[label] = user_port
         self.canvas.itemconfig(self.valve_shapes[label], fill="yellow")
-        self.log(f"moving Valve {label} -> Port {port}...")
+        self.log(f"moving Valve {label} -> Port {user_port} (HW: {hw_port})...")
         self.root.update_idletasks()
+        
         try:
-            # 2. Physical Move
-            self.vc.setValvePort(label, port)
+            # 2. Physical Move - Send the SECRET integer to amfTools
+            self.vc.setValvePort(label, hw_port)
+            
             # 3. 'Arrived'
-            self.actual_positions[label] = port
+            self.actual_positions[label] = user_port
             self.canvas.itemconfig(self.valve_shapes[label], fill="lightgreen")
-            self.canvas.itemconfig(self.valve_text_map[label], text=f"{label} | P:{port}")
+            self.canvas.itemconfig(self.valve_text_map[label], text=f"{label} | P:{user_port}")
+            
         except Exception as e:
             # 4. Error! Turn it Red
             self.canvas.itemconfig(self.valve_shapes[label], fill="red")
-            self.log(f"MOVE FAILED: Valve {label} to {port}. Error: {e}")
+            self.log(f"MOVE FAILED: Valve {label} to {user_port}. Error: {e}")
+            
         self.root.update_idletasks()
+        
+        
+        
 
     def log(self, message):
         """Adds timestamped feedback to the console."""
