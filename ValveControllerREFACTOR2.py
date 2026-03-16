@@ -315,15 +315,15 @@ class ValveApp:
             self.canvas.itemconfig(self.valve_shapes[label], fill=color)
         self.root.after(5000, self.update_hardware_loop)
 
-    def toggle_valve(self, event):
-        item = self.canvas.find_closest(event.x, event.y)[0]
-        if item in self.valve_map:
-            label = self.valve_map[item]
-            cur_p = self.actual_positions[label]
-            max_p = self.vc.portCounts[label]
-            new_p = (cur_p % max_p) + 1
-            # Manual moves should run in a thread so they don't lock the GUI
-            threading.Thread(target=self.moveValve, args=(label, new_p), daemon=True).start()
+    # def toggle_valve(self, event):
+    #     item = self.canvas.find_closest(event.x, event.y)[0]
+    #     if item in self.valve_map:
+    #         label = self.valve_map[item]
+    #         cur_p = self.actual_positions[label]
+    #         max_p = self.vc.portCounts[label]
+    #         new_p = (cur_p % max_p) + 1
+    #         # Manual moves should run in a thread so they don't lock the GUI
+    #         threading.Thread(target=self.moveValve, args=(label, new_p), daemon=True).start()
 
     def add_step(self):
         sel = self.lib_list.curselection()
