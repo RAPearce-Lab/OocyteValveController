@@ -119,6 +119,7 @@ class ValveApp:
         
     def load_port_map(self, csv_file="ValveMap.csv"):
         """Reads ValveMap.csv and creates translation dictionaries."""
+        self.port_display_info = {} # Key: (valve, user_port) -> Value: "Phys 1: ND96 (Schem 1)"
         self.user_to_hw = {}
         self.hw_to_user = {}
         self.ordered_user_ports = {}       
@@ -133,6 +134,9 @@ class ValveApp:
                 self.ordered_user_ports[valve] = []
             last_schem = ""
             for _, row in df.iterrows():
+                desc = row['description'] if pd.notna(row['description']) else "No Description"
+                phys = int(row['Physical port']) if pd.notna(row['Physical port']) else "?"
+
                 valve = row['Valve']
                 if pd.isna(valve): continue
                 
@@ -149,6 +153,10 @@ class ValveApp:
                 # Save the translations
                 self.user_to_hw[(valve, user_port)] = hw_port
                 self.hw_to_user[(valve, hw_port)] = user_port
+                
+                # Create the string you want to see on the UI
+                display_str = f"P:{phys} | {desc} ({user_port})"
+                self.port_display_info[(valve, user_port)] = display_str
                 
                 # Save the correct order so 'toggle' knows what's next
                 self.ordered_user_ports[valve].append(user_port)
@@ -271,11 +279,13 @@ class ValveApp:
         user_port = str(user_port) # ensure it's a string
         hw_port = self.user_to_hw.get((label, user_port))
         
+        display_text = self.port_display_info.get((label, user_port), f"Port {user_port}")
+        
         if hw_port is None:
             self.log(f"ERROR: No hardware mapping found for {label} -> Schematic {user_port}")
             return 
         self.target_positions[label] = user_port
-        self.canvas.itemconfig(self.valve_shapes[label], fill="yellow")
+        self.canvas.itemconfig(self.valve_text_map[label], text=f"{label} | {display_text}")
         self.log(f"moving Valve {label} -> Port {user_port} (HW: {hw_port})...")
         self.root.update_idletasks()
         
@@ -286,7 +296,7 @@ class ValveApp:
             # 3. 'Arrived'
             self.actual_positions[label] = user_port
             self.canvas.itemconfig(self.valve_shapes[label], fill="lightgreen")
-            self.canvas.itemconfig(self.valve_text_map[label], text=f"{label} | P:{user_port}")
+            self.canvas.itemconfig(self.valve_text_map[label], text=f"{label} | {display_text}")
             
         except Exception as e:
             # 4. Error! Turn it Red
