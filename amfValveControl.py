@@ -113,7 +113,7 @@ class amfValveControl:
         thisValve = amfTools.AMF(self.valves.get(valveID))
         thisValve.valveShortestPath(portID, block= False)  # Non blocking function
         time.sleep(0.01)
-        self.log(f"moving valve: {valveID} to port {portID}.")
+        self.log(f"Valve {valveID} given command port# {portID}.")
         thisValve.disconnect()
     def getValvePort(self, valveID):
         thisValve = amfTools.AMF(self.valves.get(valveID))
