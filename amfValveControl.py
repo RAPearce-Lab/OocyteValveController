@@ -21,7 +21,7 @@ class amfValveControl:
         # 1 get the list of connected valves
         self.valveList = self.getValveList()
         # print("1. Connected valves discovered.")
-        self.log("1. Connected valves discovered.")
+        self.log("1. Discovering connected valves.")
         # 2. load a valve configuration (serial# to letter association)
         self.serialMap = {}
         self.loadConfig(configFile)
@@ -32,17 +32,22 @@ class amfValveControl:
         expectedSerials = set(self.serialMap.values())
         if theseSerials != expectedSerials:
             missingValves = expectedSerials - theseSerials
-            raise RuntimeError(f"unable to find valve: {missingValves} (try unplugging and re-plugging)")
+            #raise RuntimeError(f"unable to find valve: {missingValves} (try unplugging and re-plugging)")
+            raise RuntimeError(f"unable to find valve: {missingValves} ENTERING SIMULATION MODE")
         # print("3. All valves confirmed.")
         self.log("3. All valves confirmed.")
         # 4. associate the letters with the serial number and object
         self.initializeValves(self.valveList)
         # print("4. Letter mapping to hardware completed.")
         self.log("4. Letter mapping to hardware completed.")
+        
+        
         # 5. home all valves 
         self.setAllValvesHome()
+        
         # print("5. All valves homed.")
         self.log("5. All valves homed.")
+        
     def loadConfig(self,configFile):
         thisFolder = os.path.dirname(__file__)
         configFilePath = os.path.join(thisFolder,configFile)
@@ -59,15 +64,12 @@ class amfValveControl:
             for hardwareItem in valveList:
                 if hardwareItem.serialnumber == sn:
                     self.valves[label] = hardwareItem
-                    #thisValve = amfTools.AMF(hardwareItem)
-                    #self.valves[label] = thisValve
                     nPorts = self.portCounts[label]       
                     self.setNumberOfPorts(label,nPorts)
                     state = 1
                     self.configureStopOnMiddle(label,state) 
         if len(self.valves) != len(self.serialMap):
             raise RuntimeError("Valves found and valves expected do not match!")
-        
         
     def setNumberOfPorts(self, valveID, nPorts):
         thisValve = amfTools.AMF(self.valves.get(valveID))
@@ -106,14 +108,12 @@ class amfValveControl:
         thisValve.disconnect()
     def setAllValvesHome(self):
         for label in self.valves:
-            # print(f"Homing Valve {label}.")
-            # self.log(f"Homing Valve {label}.")
             self.setValveHome(label)
     def setValvePort(self, valveID, portID):
         thisValve = amfTools.AMF(self.valves.get(valveID))
         thisValve.valveShortestPath(portID, block= False)  # Non blocking function
         time.sleep(0.01)
-        self.log(f"Valve {valveID} given command port# {portID}.")
+        self.log(f"Valve {valveID} given command: move to port {portID}")
         thisValve.disconnect()
     def getValvePort(self, valveID):
         thisValve = amfTools.AMF(self.valves.get(valveID))
