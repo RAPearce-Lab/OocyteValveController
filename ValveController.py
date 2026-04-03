@@ -154,7 +154,7 @@ class ValveApp:
 
     def setup_ui(self):
         v_f = ttk.LabelFrame(self.root, text="Counter-Clockwise Physical View"); v_f.pack(fill="x", padx=10, pady=5)
-        self.canvas = tk.Canvas(v_f, width=1300, height=380, bg="#ffffff"); self.canvas.pack()
+        self.canvas = tk.Canvas(v_f, width=1300, height=410, bg="#ffffff"); self.canvas.pack()
         self.canvas.bind("<Button-1>", self.handle_click)
 
         self.paned = tk.PanedWindow(self.root, orient="horizontal", sashwidth=4, bg="#cccccc")
