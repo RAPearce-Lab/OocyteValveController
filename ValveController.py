@@ -1,6 +1,8 @@
 import os, json, threading, time, math, pandas as pd
 import tkinter as tk
 from tkinter import ttk, filedialog, simpledialog, messagebox
+import serial
+import serial.tools.list_ports
 
 try:
     from amfValveControl import amfValveControl
@@ -51,6 +53,8 @@ class ValveApp:
         else:
             self.hardware_enabled = False
             self.log("SIMULATION MODE (amfValveControl.py missing)")
+            
+        self.init_ttl_trigger()
 
     def load_port_map(self):
         """Loads CSV and maintains the exact row sequence for geometry."""
@@ -240,16 +244,37 @@ class ValveApp:
             else: self._step(item)
         self.log("Protocol Finished."); self.is_running = False
 
+
     def _step(self, item_id):
         name = self.seq_tree.item(item_id, 'text')
         dur = float(self.seq_tree.item(item_id, 'values')[0])
+
         if "PROMPT" in name.upper():
-            self.log("PAUSED..."); self.btn_proceed.config(state="normal")
-            self.proceed_event.clear(); self.proceed_event.wait(); self.btn_proceed.config(state="disabled")
+            self.log("PAUSED for User...")
+            self.btn_proceed.config(state="normal")
+            self.proceed_event.clear()
+            self.proceed_event.wait()
+            self.btn_proceed.config(state="disabled")
         elif "WAIT" in name.upper():
-            self.log(f"Wait {dur}s"); time.sleep(dur)
+            self.log(f"Waiting {dur}s")
+            time.sleep(dur)
         else:
-            self.run_preset_data(name); time.sleep(dur)
+            # We fetch the preset data
+            preset_data = self.presets.get(name)
+            
+            # Check if this is a "Sync/Pulse" preset
+            if "TTL_SYNC" in name.upper():
+                self.pulse_ttl() # or self.vc.pulse_ttl() depending on where you put the method
+                self.log("TTL Trigger Branch Executed")
+            
+            # If it's a valve move, iterate ONLY the valves in THIS preset
+            if isinstance(preset_data, list):
+                for v_label, _, p_port in preset_data:
+                    # Call YOUR moveValve which calls YOUR setValvePort independently
+                    self.moveValve(v_label, p_port)
+            
+            # Wait for the duration defined for this specific step
+            time.sleep(dur)
 
     def run_preset_data(self, name):
         data = self.presets.get(name)
@@ -348,6 +373,37 @@ class ValveApp:
             for r in d:
                 if r["is_group"]: m[r["name"]] = self.seq_tree.insert('', 'end', text=r["name"], values=(r["time"],), tags=('group',), open=True)
                 else: self.seq_tree.insert(m.get(r["parent"], ""), 'end', text=r["name"], values=(r["time"],))
+                
+    def init_ttl_trigger(self):
+        import serial
+        import serial.tools.list_ports
+        
+        self.ttl_ser = None
+        target_serial = "ABAONY0PA" # Your specific Adafruit cable
+        
+        ports = serial.tools.list_ports.comports()
+        for p in ports:
+            if p.serial_number == target_serial:
+                try:
+                    # Open the port. FTDI chips handle setRTS very reliably.
+                    self.ttl_ser = serial.Serial(p.device, 9600)
+                    
+                    # Set the 5V High (Idle) state immediately on open
+                    self.ttl_ser.setRTS(True) 
+                    self.log(f"TTL Trigger confirmed on {p.device} (SN: {target_serial})")
+                    return
+                except Exception as e:
+                    self.log(f"Error opening TTL cable: {e}")
+        
+        self.log("ERROR: TTL Trigger cable (SN: ABAONY0PA) not found!")
+
+    def pulse_ttl(self):
+        """Active-Low Pulse: High(5V) -> Low(0V) for 100ms -> High(5V)"""
+        if self.ttl_ser and self.ttl_ser.is_open:
+            self.ttl_ser.setRTS(False) # Trigger Start
+            time.sleep(0.1)           # Pulse Width
+            self.ttl_ser.setRTS(True)  # Trigger End / Reset to Idle
+            self.log("TTL Pulse Executed.")
 
 if __name__ == "__main__":
     root = tk.Tk(); app = ValveApp(root); root.mainloop()
